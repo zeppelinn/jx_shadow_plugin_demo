@@ -1,0 +1,83 @@
+plugins {
+    id 'com.android.library'
+    id 'maven-publish'
+}
+
+android {
+    compileSdk 32
+
+    defaultConfig {
+        minSdk 21
+        targetSdk 32
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    // 使用 api 而不是 compileOnly：发布 aar 时会传递依赖，而不是打包进 aar
+    api 'com.tencent.shadow.core:utils:2.2.1'
+    api 'com.tencent.shadow.core:common:2.2.1'
+    api 'com.tencent.shadow.dynamic:apk:2.2.1'
+
+    api 'com.jingxi.smart.smarthome:api:1.0.2'
+}
+
+//  添加上传脚本，将holder打包成aar上传到maven私有仓库中
+//  指定./gradlew publish可以上传
+//  请在local.properties中定义私有仓库访问的访问地址和权限
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId GROUP_ID
+            artifactId ARTIFACT_ID
+            version VERSION_NAME
+            artifact("./build/outputs/aar/app-release.aar")
+
+            pom.withXml {
+                def dependenciesNode = asNode().appendNode("dependencies")
+                configurations.api.allDependencies.forEach(){
+                    Dependency dependency ->
+                        if (dependency.version != "unspecified" && dependency.name != "unspecified"){
+                            def dependencyNode = dependenciesNode.appendNode('dependency')
+                            dependencyNode.appendNode('groupId', dependency.group)
+                            dependencyNode.appendNode('artifactId', dependency.name)
+                            dependencyNode.appendNode('version', dependency.version)
+                        }
+                }
+            }
+        }
+    }
+    repositories {
+        Properties properties = new Properties()
+        def propertiesFile = project.rootProject.file('local.properties')
+        if (propertiesFile.exists()) {
+            properties.load(project.rootProject.file('local.properties').newDataInputStream())
+            def user =  properties.getProperty('maven_repo_user')
+            def pwd =  properties.getProperty('maven_repo_pwd')
+            def maven_url =  properties.getProperty('maven_repo_url')
+            maven {
+                name = "shadow"
+                allowInsecureProtocol true
+                credentials {
+                    username = user
+                    password = pwd
+                }
+                url maven_url
+            }
+        }
+    }
+}

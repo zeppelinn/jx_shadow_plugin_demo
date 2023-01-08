@@ -1,0 +1,32 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+
+        //  region 添加maven私有仓库，引入api中定义的接口
+        Properties properties = new Properties()
+        properties.load(new File(rootDir.absolutePath +"/local.properties").newDataInputStream())
+        def user =  properties.getProperty('maven_repo_user')
+        def pwd =  properties.getProperty('maven_repo_pwd')
+        def maven_url =  properties.getProperty('maven_repo_url')
+        maven {
+            allowInsecureProtocol true
+            credentials {
+                username = user
+                password = pwd
+            }
+            url maven_url
+        }
+        //  end region
+    }
+}
+rootProject.name = "SmartHomeHolder"
+include ':app'

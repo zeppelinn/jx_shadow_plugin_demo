@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">SmartHomePlugin</string>
+    <string name="device_name_1">飞利浦灯带</string>
+    <string name="device_name_2">飞利浦灯球</string>
+</resources>
